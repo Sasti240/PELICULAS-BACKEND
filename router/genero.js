@@ -70,4 +70,17 @@ router.put('/:generoId', [
     }
 });
 
+router.delete('/:generoId', async function (req, res) {
+    try {
+        const genero = await Genero.findByIdAndDelete(req.params.generoId);
+        if (!genero) {
+            return res.status(404).send('Género no encontrado');
+        }
+        res.send('Género eliminado con éxito');
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('Ocurrió un error al eliminar el género.');
+    }
+});
+
 module.exports = router;
