@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const Tipo = require('../models/Tipo');
+const Media = require('../models/Media');
 const { validationResult, check } = require('express-validator');
 
 const router = Router();
@@ -68,7 +69,16 @@ router.put('/:tipoId', [
 
 router.delete('/:tipoId', async (req, res) => {
     try {
-        const tipo = await Tipo.findByIdAndDelete(req.params.tipoId);
+        const tipoId = req.params.tipoId;
+        const mediaEnUso = await Media.find({ tipo: tipoId });
+
+        if (mediaEnUso.length > 0) {
+            return res.status(400).json({
+                msg: 'No se puede eliminar el tipo, está en uso por alguna película o serie.'
+            });
+        }
+
+        const tipo = await Tipo.findByIdAndDelete(tipoId);
         if (!tipo) {
             return res.status(404).send('Tipo no encontrado');
         }

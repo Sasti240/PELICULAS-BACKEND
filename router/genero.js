@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const Genero = require('../models/Genero');
+const Media = require('../models/Media');
 const { validationResult, check } = require('express-validator');
 
 const router = Router();
@@ -72,11 +73,21 @@ router.put('/:generoId', [
 
 router.delete('/:generoId', async function (req, res) {
     try {
-        const genero = await Genero.findByIdAndDelete(req.params.generoId);
+        const generoId = req.params.generoId;
+        const mediaEnUso = await Media.find({ genero: generoId });
+
+        if (mediaEnUso.length > 0) {
+            return res.status(400).json({
+                msg: 'No se puede eliminar el género, está en uso por alguna película o serie.'
+            });
+        }
+
+        const genero = await Genero.findByIdAndDelete(generoId);
         if (!genero) {
             return res.status(404).send('Género no encontrado');
         }
-        res.send('Género eliminado con éxito');
+
+        res.send({ msg: 'Género eliminado correctamente' });
     } catch (error) {
         console.log(error);
         res.status(500).send('Ocurrió un error al eliminar el género.');

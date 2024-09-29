@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const Productora = require('../models/Productora');
+const Media = require('../models/Media');
 const { validationResult, check } = require('express-validator');
 
 const router = Router();
@@ -76,7 +77,16 @@ router.put('/:productoraId', [
 
 router.delete('/:productoraId', async function (req, res) {
     try {
-        const productora = await Productora.findByIdAndDelete(req.params.productoraId);
+        const productoraId = req.params.productoraId;
+        const mediaEnUso = await Media.find({ productora: productoraId });
+
+        if (mediaEnUso.length > 0) {
+            return res.status(400).json({
+                msg: 'No se puede eliminar la productora, está en uso por alguna película o serie.'
+            });
+        }
+
+        const productora = await Productora.findByIdAndDelete(productoraId);
         if (!productora) {
             return res.status(404).send('Productora no encontrada');
         }

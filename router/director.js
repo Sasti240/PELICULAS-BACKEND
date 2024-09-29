@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const Director = require('../models/Director'); 
+const Media = require('../models/Media');
 const { validationResult, check } = require('express-validator');
 
 const router = Router();
@@ -68,15 +69,24 @@ router.put('/:directorId', [
 
 router.delete('/:directorId', async function (req, res) {
     try {
-        const { directorId } = req.params;
+        const directorId = req.params.directorId;
+        const mediaEnUso = await Media.find({ director: directorId });
+
+        if (mediaEnUso.length > 0) {
+            return res.status(400).json({
+                msg: 'No se puede eliminar el director, está en uso por alguna película o serie.'
+            });
+        }
+
         const director = await Director.findByIdAndDelete(directorId);
         if (!director) {
-            return res.status(404).json({ mensaje: 'Director no encontrado' });
+            return res.status(404).send('Director no encontrado');
         }
-        res.status(200).json({ mensaje: 'Director eliminado correctamente' });
+
+        res.send({ msg: 'Director eliminado correctamente' });
     } catch (error) {
         console.log(error);
-        res.status(500).send('Ocurrió un error al eliminar el director');
+        res.status(500).send('Ocurrió un error al eliminar el director.');
     }
 });
 
